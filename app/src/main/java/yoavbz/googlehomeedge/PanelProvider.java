@@ -120,7 +120,6 @@ public class PanelProvider extends SlookCocktailProvider {
 	}
 
 	private void changeVolume(final Context context, final int amount) {
-		//String url = "http://192.168.1.4:3000/device/f141b64894ad1e71268958b5a10b2dde/volume/25";
 		String url = PreferenceManager.getDefaultSharedPreferences(context).getString("ip", null);
 		if (url == null) {
 			panelDisabled = false;
