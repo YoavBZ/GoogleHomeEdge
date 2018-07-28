@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cocktail-provider
+		label="@string/label"
+		description="@string/description"
+		cocktailWidth="550"
+		cofigure="yoavbz.googlehomeedge.SettingsActivity">
+		<!--previewImage="@drawable/longclick_sample_preview"-->
+</cocktail-provider>

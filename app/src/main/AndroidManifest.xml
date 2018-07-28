@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+		package="yoavbz.googlehomeedge">
+
+	<uses-permission android:name="com.samsung.android.providers.context.permission.WRITE_USE_APP_FEATURE_SURVEY"/>
+	<uses-permission android:name="android.permission.INTERNET"/>
+
+	<application
+			android:allowBackup="true"
+			android:label="@string/app_name"
+			android:theme="@style/AppTheme">
+		<activity android:name=".MainActivity"
+				android:label="@string/app_name"
+				android:theme="@android:style/Theme.Holo">
+			<intent-filter>
+				<category android:name="android.intent.category.LAUNCHER"/>
+			</intent-filter>
+		</activity>
+		<activity android:name=".SettingsActivity"
+				android:exported="false"
+				android:label="@string/app_name"
+				android:theme="@android:style/Theme.Holo">
+			<intent-filter>
+				<action android:name="android.intent.action.MAIN"/>
+				<category android:name="android.intent.category.LAUNCHER"/>
+			</intent-filter>
+		</activity>
+		<activity android:name=".DeviceDialog"
+				android:excludeFromRecents="true"
+				android:noHistory="true"
+				android:theme="@style/Dialog">
+		</activity>
+
+		<receiver android:name=".PanelProvider">
+			<intent-filter>
+				<action android:name="com.samsung.android.cocktail.v2.action.COCKTAIL_UPDATE"/>
+				<action android:name="yoavbz.googleedgehome.action.ACTION_PLUS"/>
+				<action android:name="yoavbz.googleedgehome.action.ACTION_MINUS"/>
+				<action android:name="yoavbz.googleedgehome.action.ACTION_PULL_TO_REFRESH"/>
+				<action android:name="yoavbz.googlehomeedge.action.ACTION_OPEN_DIALOG"/>
+			</intent-filter>
+
+			<meta-data
+					android:name="com.samsung.android.cocktail.provider"
+					android:resource="@xml/cocktail_provider"/>
+		</receiver>
+	</application>
+
+</manifest>

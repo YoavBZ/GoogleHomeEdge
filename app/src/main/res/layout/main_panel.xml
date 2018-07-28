@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		android:id="@+id/panel"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:orientation="vertical"
+		android:gravity="center">
+
+	<ImageView
+			android:layout_width="100dp"
+			android:layout_height="100dp"
+			android:id="@+id/logo"
+			android:contentDescription="@string/logo_description"/>
+
+	<TextView
+			android:id="@+id/device_select"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="Device"
+			android:textColor="@android:color/white"
+			android:layout_marginBottom="150dp"/>
+
+	<TextView
+			android:id="@+id/volume_title"
+			android:layout_height="wrap_content"
+			android:layout_width="wrap_content"
+			android:text="@string/volume_title"
+			android:textColor="@android:color/white"
+			android:textSize="16sp"
+			android:textStyle="bold"/>
+
+	<TextView
+			android:id="@+id/volume_text"
+			android:layout_height="wrap_content"
+			android:layout_width="wrap_content"
+			android:textColor="@android:color/white"
+			android:textSize="16sp"/>
+
+	<Button
+			android:id="@+id/plus"
+			android:layout_width="60dp"
+			android:layout_height="60dp"
+			android:layout_marginTop="100dp"
+			android:background="@drawable/action_button"
+			android:foreground="@drawable/plus_selector"/>
+
+	<Button
+			android:id="@+id/minus"
+			android:layout_width="60dp"
+			android:layout_height="60dp"
+			android:layout_margin="10dp"
+			android:background="@drawable/action_button"
+			android:foreground="@drawable/minus_selector"/>
+
+</LinearLayout>

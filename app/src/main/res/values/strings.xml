@@ -1,0 +1,14 @@
+<resources>
+	<string name="app_name">Google Home Edge</string>
+	<string name="title">Installed GoogleHomeEdge!</string>
+	<string name="main_text">Enable this Edge Panel and have fun</string>
+	<string name="state_text">Control your Google Home device right from this panel!</string>
+	<string name="no_support">The device doesn\'t support Edge modes!</string>
+	<string name="description">description</string>
+	<string name="label">Google Home</string>
+	<string name="button">Button</string>
+	<string name="logo_description">Google Home logo placeholder</string>
+	<string name="volume_title">Volume:</string>
+	<string name="no_connection">No connection</string>
+	<string name="title_activity_settings">Settings</string>
+</resources>
