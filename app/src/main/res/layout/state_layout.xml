@@ -1,15 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#00ffffff" >
+<LinearLayout
+		xmlns:android="http://schemas.android.com/apk/res/android"
+		android:layout_height="wrap_content"
+		android:layout_width="wrap_content"
+		android:orientation="horizontal"
+		android:background="#00ffffff">
 
 	<TextView
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:gravity="start"
-		android:textColor="#ffffff"
-		android:text="@string/state_text"
-		android:textSize="15sp" />
+			android:id="@+id/state_text"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:gravity="start"
+			android:textColor="#ffffff"
+			android:text="@string/state_text"
+			android:textSize="15sp"/>
 
-</FrameLayout>
+	<ImageButton
+			android:id="@+id/refresh_button"
+			android:layout_width="24dp"
+			android:layout_height="24dp"
+			android:src="@drawable/refresh"
+			android:contentDescription="@string/refresh_button_description"/>
+
+	<ProgressBar
+			android:id="@+id/progressBar"
+			android:layout_height="24dp"
+			android:layout_width="24dp"
+			style="?android:attr/progressBarStyle"
+			android:visibility="gone"/>
+
+</LinearLayout>

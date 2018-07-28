@@ -29,7 +29,7 @@ public class DeviceDialog extends Activity {
 		int i = 0;
 		for (String device : devices) {
 			names[i] = device.substring(0, device.charAt('_'));
-			ids[i++] = device.substring(device.charAt('_'));
+			ids[i++] = device.substring(device.charAt('_') + 1);
 		}
 		Log.d(TAG, "Devices names: " + Arrays.toString(names) + ", ids: " + Arrays.toString(ids));
 

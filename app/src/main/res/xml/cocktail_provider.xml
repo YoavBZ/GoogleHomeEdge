@@ -3,6 +3,6 @@
 		label="@string/label"
 		description="@string/description"
 		cocktailWidth="550"
-		cofigure="yoavbz.googlehomeedge.SettingsActivity">
+		cofigure="yoavbz.googlehomeedge.MainActivity">
 		<!--previewImage="@drawable/longclick_sample_preview"-->
 </cocktail-provider>
