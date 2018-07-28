@@ -11,6 +11,7 @@ import android.util.Log;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Set;
 
 public class DeviceDialog extends Activity {
 
@@ -23,8 +24,13 @@ public class DeviceDialog extends Activity {
 		setFinishOnTouchOutside(false);
 
 		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
-		String[] names = pref.getStringSet("names", Collections.<String>emptySet()).toArray(new String[0]);
-		final String[] ids = pref.getStringSet("ids", Collections.<String>emptySet()).toArray(new String[0]);
+		Set<String> devices = pref.getStringSet("devices", Collections.<String>emptySet());
+		final String[] names = new String[devices.size()], ids = new String[devices.size()];
+		int i = 0;
+		for (String device : devices) {
+			names[i] = device.substring(0, device.charAt('_'));
+			ids[i++] = device.substring(device.charAt('_'));
+		}
 		Log.d(TAG, "Devices names: " + Arrays.toString(names) + ", ids: " + Arrays.toString(ids));
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);

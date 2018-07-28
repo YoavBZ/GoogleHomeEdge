@@ -24,7 +24,6 @@ public class PanelProvider extends SlookCocktailProvider {
 	private static final String ACTION_MINUS = "yoavbz.googlehomeedge.action.ACTION_MINUS";
 	private static final String ACTION_ENABLE = "com.samsung.android.cocktail.action.COCKTAIL_ENABLED";
 	private static final String ACTION_PULL_TO_REFRESH = "yoavbz.googlehomeedge.action.ACTION_PULL_TO_REFRESH";
-	private static final String OPEN_DIALOG = "yoavbz.googlehomeedge.action.ACTION_OPEN_DIALOG";
 	private RemoteViews panelRv = null;
 	private RemoteViews stateRv = null;
 	OkHttpClient client = new OkHttpClient();

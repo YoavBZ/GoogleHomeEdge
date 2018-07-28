@@ -10,9 +10,9 @@ import android.widget.Toast;
 import okhttp3.*;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 public class SettingsActivity extends PreferenceActivity {
 
@@ -44,6 +44,7 @@ public class SettingsActivity extends PreferenceActivity {
 									Toast.makeText(getApplicationContext(), "Connection Failed!", Toast.LENGTH_SHORT)
 											.show();
 									listPreference.setEnabled(false);
+									Log.d(getLocalClassName(), "IP address remains: " + ip.getText());
 									ip.setText(ip.getText());
 								}
 							});
@@ -59,16 +60,15 @@ public class SettingsActivity extends PreferenceActivity {
 										try {
 											listPreference.setEntries(updatedContent[0]);
 											listPreference.setEntryValues(updatedContent[1]);
+											listPreference.setEnabled(true);
+											Toast.makeText(getApplicationContext(), "Connection Succeeded", Toast.LENGTH_LONG)
+													.show();
 										} catch (Exception e) {
 											Log.d(getLocalClassName(), e.toString());
 											Toast.makeText(getApplicationContext(), "Connection Failed", Toast.LENGTH_LONG)
 													.show();
 											listPreference.setEnabled(false);
-											return;
 										}
-										listPreference.setEnabled(true);
-										Toast.makeText(getApplicationContext(), "Connection Succeeded", Toast.LENGTH_LONG)
-												.show();
 									}
 								});
 							} catch (Exception e) {
@@ -86,18 +86,25 @@ public class SettingsActivity extends PreferenceActivity {
 	}
 
 	private String[][] updateList() throws IOException, JSONException {
+		// Fetching IP address
 		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		String ip = pref.getString("ip", null);
-		ArraySet<String> names = new ArraySet<>(), ids = new ArraySet<>();
 
+		// Fetching current devices names and ids
 		final Request request = new Request.Builder().url(ip + "/device").build();
 		Response res = client.newCall(request).execute();
 		JSONArray arr = new JSONArray(res.body().string());
+
+		ArraySet<String> devices = new ArraySet<>();
+		String[] names = new String[arr.length()], ids = new String[arr.length()];
 		for (int i = 0; i < arr.length(); i++) {
-			names.add(arr.getJSONObject(i).getString("name"));
-			ids.add(arr.getJSONObject(i).getString("id"));
+			JSONObject o = arr.getJSONObject(i);
+			devices.add(String.format("%s_%s", o.getString("name"), o.getString("id")));
+			names[i] = arr.getJSONObject(i).getString("name");
+			ids[i] = arr.getJSONObject(i).getString("id");
 		}
-		 pref.edit().putStringSet("names", names).putStringSet("ids", ids).apply();
-		return new String[][]{names.toArray(new String[0]), ids.toArray(new String[0])};
+		// Storing current devices list
+		pref.edit().putStringSet("devices", devices).apply();
+		return new String[][]{names, ids};
 	}
 }
