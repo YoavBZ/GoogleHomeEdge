@@ -16,7 +16,6 @@
 			android:id="@+id/device_select"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:text="Device"
 			android:textColor="@android:color/white"
 			android:layout_marginBottom="150dp"/>
 

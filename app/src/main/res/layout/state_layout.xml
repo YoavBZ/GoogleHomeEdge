@@ -1,32 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
 		xmlns:android="http://schemas.android.com/apk/res/android"
-		android:layout_height="wrap_content"
-		android:layout_width="wrap_content"
-		android:orientation="horizontal"
-		android:background="#00ffffff">
+		android:layout_height="match_parent"
+		android:layout_width="match_parent"
+		android:orientation="vertical">
 
 	<TextView
 			android:id="@+id/state_text"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:gravity="start"
-			android:textColor="#ffffff"
+			android:textColor="@android:color/white"
 			android:text="@string/state_text"
 			android:textSize="15sp"/>
 
-	<ImageButton
+	<Button
 			android:id="@+id/refresh_button"
-			android:layout_width="24dp"
-			android:layout_height="24dp"
-			android:src="@drawable/refresh"
-			android:contentDescription="@string/refresh_button_description"/>
+			android:layout_width="20dp"
+			android:layout_height="20dp"
+			android:background="@drawable/refresh"/>
 
 	<ProgressBar
-			android:id="@+id/progressBar"
-			android:layout_height="24dp"
-			android:layout_width="24dp"
+			android:id="@+id/progress_bar"
+			android:layout_height="20dp"
+			android:layout_width="20dp"
 			style="?android:attr/progressBarStyle"
+			android:indeterminateTint="@android:color/white"
 			android:visibility="gone"/>
 
 </LinearLayout>

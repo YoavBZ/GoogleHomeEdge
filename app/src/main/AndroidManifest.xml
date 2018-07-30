@@ -28,9 +28,9 @@
 		<receiver android:name=".PanelProvider">
 			<intent-filter>
 				<action android:name="com.samsung.android.cocktail.v2.action.COCKTAIL_UPDATE"/>
-				<action android:name="yoavbz.googleedgehome.action.ACTION_PLUS"/>
-				<action android:name="yoavbz.googleedgehome.action.ACTION_MINUS"/>
-				<action android:name="yoavbz.googleedgehome.action.ACTION_PULL_TO_REFRESH"/>
+				<action android:name="yoavbz.googlehomeedge.action.ACTION_PLUS"/>
+				<action android:name="yoavbz.googlehomeedge.action.ACTION_MINUS"/>
+				<action android:name="yoavbz.googlehomeedge.action.ACTION_REFRESH"/>
 				<action android:name="yoavbz.googlehomeedge.action.ACTION_OPEN_DIALOG"/>
 			</intent-filter>
 
@@ -38,6 +38,10 @@
 					android:name="com.samsung.android.cocktail.provider"
 					android:resource="@xml/cocktail_provider"/>
 		</receiver>
+
+		<meta-data
+				android:name="com.samsung.android.cocktail.mode"
+				android:value="edge_single_plus"/>
 	</application>
 
 </manifest>

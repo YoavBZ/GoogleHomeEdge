@@ -18,6 +18,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 public class PanelProvider extends SlookCocktailProvider {
 
@@ -25,7 +26,6 @@ public class PanelProvider extends SlookCocktailProvider {
 
 	private static final String ACTION_PLUS = "yoavbz.googlehomeedge.action.ACTION_PLUS";
 	private static final String ACTION_MINUS = "yoavbz.googlehomeedge.action.ACTION_MINUS";
-	private static final String ACTION_ENABLE = "com.samsung.android.cocktail.action.COCKTAIL_ENABLED";
 	private static final String ACTION_REFRESH = "yoavbz.googlehomeedge.action.ACTION_REFRESH";
 	private RemoteViews panelRv = null;
 	private RemoteViews stateRv = null;
@@ -34,15 +34,18 @@ public class PanelProvider extends SlookCocktailProvider {
 	private static boolean panelDisabled = true;
 
 	@Override
+	public void onEnabled(Context context) {
+		super.onEnabled(context);
+		fetchVolume(context);
+	}
+
+	@Override
 	public void onReceive(final Context context, Intent intent) {
 		super.onReceive(context, intent);
 		String action = intent.getAction();
 		Log.d(TAG, "onReceive() : action - " + action);
 
 		switch (action) {
-			case ACTION_ENABLE:
-				fetchVolume(context);
-				break;
 			case ACTION_PLUS:
 				changeVolume(context, 5);
 				break;
@@ -50,23 +53,32 @@ public class PanelProvider extends SlookCocktailProvider {
 				changeVolume(context, -5);
 				break;
 			case ACTION_REFRESH:
+				updatePanelState(context);
+				animateRefresh(context, true);
 				fetchVolume(context);
 				updateDeviceList(context);
-				// Animate button
-				break;
 		}
 	}
 
-	private void updateDeviceList(Context context) {
+	private void animateRefresh(Context context, boolean start) {
+		stateRv.setViewVisibility(R.id.refresh_button, start ? View.GONE : View.VISIBLE);
+		stateRv.setViewVisibility(R.id.progress_bar, start ? View.VISIBLE : View.GONE);
+		SlookCocktailManager manager = SlookCocktailManager.getInstance(context);
+		int[] ids = manager.getCocktailIds(new ComponentName(context, getClass()));
+		manager.updateCocktail(ids[0], panelRv, stateRv);
+	}
+
+	private void updateDeviceList(final Context context) {
 		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
-		String ip = pref.getString("ip", null);
+		String url = pref.getString("url", null);
 
 		// Fetching current devices names and ids
-		final Request request = new Request.Builder().url(ip + "/device").build();
+		final Request request = new Request.Builder().url(url + "/device").build();
 		client.newCall(request).enqueue(new Callback() {
 			@Override
 			public void onFailure(Call call, IOException e) {
 				Log.e(TAG, e.toString());
+				animateRefresh(context, false);
 			}
 
 			@Override
@@ -80,7 +92,9 @@ public class PanelProvider extends SlookCocktailProvider {
 					}
 					// Storing current devices list
 					pref.edit().putStringSet("devices", devices).apply();
-				} catch (JSONException e) {
+					TimeUnit.SECONDS.sleep(2); // For better animation
+					animateRefresh(context, false);
+				} catch (InterruptedException | JSONException e) {
 					Log.e(TAG, e.toString());
 				}
 			}
@@ -88,7 +102,7 @@ public class PanelProvider extends SlookCocktailProvider {
 	}
 
 	private void fetchVolume(final Context context) {
-		String url = PreferenceManager.getDefaultSharedPreferences(context).getString("ip", null) + "/device";
+		String url = PreferenceManager.getDefaultSharedPreferences(context).getString("url", null) + "/device";
 
 		final Request request = new Request.Builder().url(url).build();
 		client.newCall(request).enqueue(new Callback() {
@@ -102,7 +116,8 @@ public class PanelProvider extends SlookCocktailProvider {
 			@Override
 			public void onResponse(Call call, Response response) {
 				try {
-					String deviceId = PreferenceManager.getDefaultSharedPreferences(context).getString("device", null);
+					String deviceId = PreferenceManager.getDefaultSharedPreferences(context)
+							.getString("deviceId", null);
 					JSONArray arr = new JSONArray(response.body().string());
 					for (int i = 0; i < arr.length(); i++) {
 						if (arr.getJSONObject(i).getString("id").equals(deviceId)) {
@@ -120,15 +135,14 @@ public class PanelProvider extends SlookCocktailProvider {
 	}
 
 	private void changeVolume(final Context context, final int amount) {
-		//String url = "http://192.168.1.4:3000/device/f141b64894ad1e71268958b5a10b2dde/volume/25";
-		String url = PreferenceManager.getDefaultSharedPreferences(context).getString("ip", null);
+		String url = PreferenceManager.getDefaultSharedPreferences(context).getString("url", null);
 		if (url == null) {
 			panelDisabled = false;
 			updatePanelState(context);
 			return;
 		}
-		String id = PreferenceManager.getDefaultSharedPreferences(context).getString("device", null);
-		url = String.format("%s/device/%s/volume/%d", url, id, volume);
+		String id = PreferenceManager.getDefaultSharedPreferences(context).getString("deviceId", null);
+		url = String.format("%s/device/%s/volume/%d", url, id, volume += amount);
 
 		Log.d(TAG, "changeVolume() : url - " + url);
 		Request request = new Request.Builder().url(url).build();
@@ -136,6 +150,7 @@ public class PanelProvider extends SlookCocktailProvider {
 			@Override
 			public void onFailure(Call call, IOException e) {
 				Log.d(TAG, e.getMessage());
+				volume -= amount;
 				panelDisabled = true;
 				updatePanelState(context);
 			}
@@ -143,7 +158,7 @@ public class PanelProvider extends SlookCocktailProvider {
 			@Override
 			public void onResponse(Call call, Response response) {
 				// Limit volume to values between 0-100
-				volume = Math.min(100, Math.max(0, volume += amount));
+				volume = Math.min(100, Math.max(0, volume));
 				Log.d(TAG, String.format("Added amount: %d, to current volume: %d", volume, amount));
 				panelDisabled = false;
 				updatePanelState(context);
@@ -156,12 +171,12 @@ public class PanelProvider extends SlookCocktailProvider {
 		panelRv = (panelRv != null) ? panelRv : createPanelView(context);
 		stateRv = (stateRv != null) ? stateRv : createStateView(context);
 
-		cocktailManager.updateCocktail(cocktailIds[0], panelRv);
 		cocktailManager.updateCocktail(cocktailIds[0], panelRv, stateRv);
 	}
 
 	private RemoteViews createPanelView(Context context) {
-		RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.main_panel);
+		RemoteViews panelView = new RemoteViews(context.getPackageName(), R.layout.main_panel);
+
 		Intent plusIntent = new Intent(context, getClass());
 		plusIntent.setAction(ACTION_PLUS);
 		Intent minusIntent = new Intent(context, getClass());
@@ -173,23 +188,23 @@ public class PanelProvider extends SlookCocktailProvider {
 		PendingIntent minusPendingIntent = PendingIntent.getBroadcast(context, 0, minusIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		PendingIntent dialogPendingIntent = PendingIntent.getActivity(context, 0, dialogIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-		rv.setOnClickPendingIntent(R.id.plus, plusPendingIntent);
-		rv.setOnClickPendingIntent(R.id.minus, minusPendingIntent);
-		rv.setOnClickPendingIntent(R.id.device_select, dialogPendingIntent);
-		rv.setImageViewResource(R.id.logo, R.drawable.google_home);
+		panelView.setOnClickPendingIntent(R.id.plus, plusPendingIntent);
+		panelView.setOnClickPendingIntent(R.id.minus, minusPendingIntent);
+		panelView.setOnClickPendingIntent(R.id.device_select, dialogPendingIntent);
+		panelView.setImageViewResource(R.id.logo, R.drawable.google_home);
 
-		return rv;
+		return panelView;
 	}
 
 	private RemoteViews createStateView(Context context) {
-		RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.state_layout);
+		RemoteViews stateView = new RemoteViews(context.getPackageName(), R.layout.state_layout);
 
-		Intent refreshIntent = new Intent(context, DeviceDialog.class);
+		Intent refreshIntent = new Intent(context, getClass());
 		refreshIntent.setAction(ACTION_REFRESH);
-		PendingIntent refreshPendingIntent = PendingIntent.getActivity(context, 0, refreshIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		PendingIntent refreshPendingIntent = PendingIntent.getBroadcast(context, 0, refreshIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-		rv.setOnClickPendingIntent(R.id.refresh_button, refreshPendingIntent);
-		return rv;
+		stateView.setOnClickPendingIntent(R.id.refresh_button, refreshPendingIntent);
+		return stateView;
 	}
 
 	private void updatePanelState(Context context) {
@@ -199,24 +214,26 @@ public class PanelProvider extends SlookCocktailProvider {
 			panelRv = createPanelView(context);
 		}
 		if (stateRv == null) {
-			stateRv = new RemoteViews(context.getPackageName(), R.layout.state_layout);
+			stateRv = createStateView(context);
 		}
 		if (panelDisabled) {
 			panelRv.setBoolean(R.id.plus, "setEnabled", false);
 			panelRv.setBoolean(R.id.minus, "setEnabled", false);
 			panelRv.setTextViewText(R.id.volume_title, "No connection.");
 			panelRv.setViewVisibility(R.id.volume_text, View.GONE);
+			panelRv.setViewVisibility(R.id.device_select, View.GONE);
 		} else {
 			panelRv.setBoolean(R.id.plus, "setEnabled", true);
 			panelRv.setBoolean(R.id.minus, "setEnabled", true);
 			panelRv.setTextViewText(R.id.volume_title, "Volume: ");
 			panelRv.setViewVisibility(R.id.volume_text, View.VISIBLE);
 			panelRv.setTextViewText(R.id.volume_text, Integer.toString(volume));
+			panelRv.setViewVisibility(R.id.device_select, View.VISIBLE);
+			String selectedDevice = PreferenceManager.getDefaultSharedPreferences(context)
+					.getString("deviceName", "Select device");
+			panelRv.setTextViewText(R.id.device_select, selectedDevice);
 		}
 
-		for (int id : cocktailIds) {
-			cocktailManager.updateCocktail(id, panelRv);
-		}
 		if (cocktailIds.length != 0) {
 			cocktailManager.updateCocktail(cocktailIds[0], panelRv, stateRv);
 		}

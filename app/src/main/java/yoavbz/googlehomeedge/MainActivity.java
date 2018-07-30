@@ -27,16 +27,17 @@ public class MainActivity extends PreferenceActivity {
 
 		addPreferencesFromResource(R.xml.preferences);
 
-		final EditTextPreference ip = (EditTextPreference) getPreferenceManager().findPreference("ip");
-		final ListPreference listPreference = (ListPreference) getPreferenceManager().findPreference("device");
+		final EditTextPreference url = (EditTextPreference) getPreferenceManager().findPreference("url");
+		final String lastIp = url.getText();
+		final ListPreference listPreference = (ListPreference) getPreferenceManager().findPreference("deviceId");
 
-		// Set action when setting an IP address
-		ip.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+		// Set action when setting URL
+		url.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 			@Override
 			public boolean onPreferenceChange(Preference preference, Object o) {
 				try {
-					// Perform GET call on the entered address
 					Log.d(getLocalClassName(), "onPreferenceChange() : object - " + o);
+					// Perform GET call on the entered address to verify server is up
 					Request req = new Request.Builder().url((String) o).build();
 					client.newCall(req).enqueue(new Callback() {
 						@Override
@@ -48,8 +49,8 @@ public class MainActivity extends PreferenceActivity {
 									Toast.makeText(getApplicationContext(), "Connection Failed!", Toast.LENGTH_SHORT)
 											.show();
 									listPreference.setEnabled(false);
-									Log.d(getLocalClassName(), "IP address remains: " + ip.getText());
-									ip.setText(ip.getText());
+									Log.d(getLocalClassName(), "URL remains: " + url.getText());
+									url.setText(lastIp);
 								}
 							});
 						}
@@ -87,6 +88,19 @@ public class MainActivity extends PreferenceActivity {
 				return false;
 			}
 		});
+
+		// Updating listPreference onPreferenceChange listener to save selected entry (device name), since the default
+		// listener saves only the selected entry value
+		listPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+			@Override
+			public boolean onPreferenceChange(Preference preference, Object newValue) {
+				PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
+						.edit()
+						.putString("deviceName", (String) listPreference.getEntries()[listPreference.findIndexOfValue((String) newValue)])
+						.apply();
+				return true;
+			}
+		});
 	}
 
 	private void checkEdgeSupport() {
@@ -104,12 +118,12 @@ public class MainActivity extends PreferenceActivity {
 	}
 
 	private String[][] updateList() throws IOException, JSONException {
-		// Fetching IP address
+		// Fetching URL
 		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-		String ip = pref.getString("ip", null);
+		String url = pref.getString("url", null);
 
 		// Fetching current devices names and ids
-		final Request request = new Request.Builder().url(ip + "/device").build();
+		final Request request = new Request.Builder().url(url + "/device").build();
 		Response res = client.newCall(request).execute();
 		JSONArray arr = new JSONArray(res.body().string());
 
