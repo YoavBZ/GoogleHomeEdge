@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-	<EditTextPreference
-			android:dialogTitle="Enter URL"
-			android:key="url"
-			android:summary="Click to set the Cast server URL"
-			android:title="Server URL"/>
+
 	<ListPreference
 			android:dialogTitle="Select device"
 			android:key="deviceId"
-			android:enabled="false"
 			android:summary="Click to select chromecast device"
 			android:title="Device List"/>
+
 </PreferenceScreen>

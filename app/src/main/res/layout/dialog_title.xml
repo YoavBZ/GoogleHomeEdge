@@ -1,12 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		android:layout_height="wrap_content"
 		android:layout_width="match_parent"
-		android:layout_height="match_parent"
-		style="@style/Theme.Design.Light.NoActionBar">
+		android:orientation="horizontal"
+		android:padding="10dp"
+		android:gravity="center">
 
-	<ListView
-			android:id="@+id/devices_list"
+	<ImageView
+			android:layout_width="45dp"
+			android:layout_height="45dp"
+			android:src="@drawable/google_cast"/>
+
+	<TextView
 			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"/>
+			android:layout_height="wrap_content"
+			android:paddingHorizontal="75dp"
+			android:textSize="16sp"
+			android:textStyle="bold"
+			android:text="Select Device"/>
 
-</android.support.constraint.ConstraintLayout>
+	<ProgressBar
+			android:id="@+id/device_progress_bar"
+			android:layout_width="30dp"
+			android:layout_height="30dp"
+			android:indeterminateTint="#3C3F41"/>
+
+</LinearLayout>

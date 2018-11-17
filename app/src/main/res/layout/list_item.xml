@@ -1,5 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-		android:id="@+id/list"
+<LinearLayout
+		xmlns:android="http://schemas.android.com/apk/res/android"
 		android:layout_height="match_parent"
-		android:layout_width="match_parent"/>
+		android:layout_width="match_parent"
+		android:padding="10dp"
+		android:layout_gravity="center_vertical">
+
+	<ImageView
+			android:layout_width="30dp"
+			android:layout_height="30dp"
+			android:src="@drawable/cast_device"/>
+
+	<TextView
+			android:id="@+id/device_title"
+			android:layout_height="wrap_content"
+			android:layout_width="wrap_content"
+			android:textSize="16sp"
+			android:layout_marginStart="16dp"
+			android:layout_marginTop="8dp"/>
+
+</LinearLayout>
