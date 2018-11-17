@@ -1,7 +1,6 @@
 package yoavbz.googlehomeedge;
 
 import android.app.Activity;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -44,18 +43,15 @@ public class VolumeDialog extends Activity {
 			public void onStopTrackingTouch(DiscreteSeekBar seekBar) {
 				final int progress = seekBar.getProgress();
 				Log.d(TAG, "Seekbar changed to value: " + progress);
-				new Thread(new Runnable() {
-					@Override
-					public void run() {
-						try {
-							chromeCast.connect();
-							chromeCast.setVolume(progress / 100);
-							Intent intent = new Intent(getApplicationContext(), PanelProvider.class);
-							intent.setAction(PanelProvider.ACTION_REFRESH);
-							sendBroadcast(intent);
-						} catch (Exception e) {
-							Log.e(TAG, e.toString());
-						}
+				new Thread(() -> {
+					try {
+						chromeCast.connect();
+						chromeCast.setVolume((float) progress / 100);
+						Intent intent = new Intent(getApplicationContext(), PanelProvider.class);
+						intent.setAction(PanelProvider.ACTION_REFRESH);
+						sendBroadcast(intent);
+					} catch (Exception e) {
+						Log.e(TAG, e.toString());
 					}
 				}).start();
 			}
@@ -64,12 +60,7 @@ public class VolumeDialog extends Activity {
 		new AlertDialog.Builder(this).setTitle("Enter Volume")
 		                             .setIcon(R.drawable.ic_volume)
 		                             .setView(seekBar)
-		                             .setOnDismissListener(new DialogInterface.OnDismissListener() {
-			                             @Override
-			                             public void onDismiss(DialogInterface dialog) {
-				                             finish();
-			                             }
-		                             })
+		                             .setOnDismissListener(dialog -> finish())
 		                             .show();
 	}
 }

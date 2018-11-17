@@ -2,7 +2,6 @@ package yoavbz.googlehomeedge;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -35,46 +34,21 @@ public class DeviceDialog extends Activity {
 	private static final String TAG = DeviceDialog.class.getSimpleName();
 	DialogAdapter adapter;
 	ProgressBar progressBar;
+	ChromeCastsListener addDeviceToDialogListener = new ChromeCastsListener() {
+		int index = 0;
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		checkEdgeSupport();
+		@Override
+		public void newChromeCastDiscovered(final ChromeCast chromeCast) {
+			runOnUiThread(() -> {
+				Log.d(TAG, String.format("Found device #%d = %s", index++, chromeCast));
+				adapter.add(chromeCast);
+			});
+		}
 
-		getWindow().setBackgroundDrawable(new ColorDrawable(0));
-		setFinishOnTouchOutside(false);
-
-		final AlertDialog.Builder builder = new AlertDialog.Builder(DeviceDialog.this);
-		adapter = new DialogAdapter(this, new ArrayList<ChromeCast>());
-		adapter.setNotifyOnChange(true);
-		View titleView = getLayoutInflater().inflate(R.layout.dialog_title, null);
-		progressBar = titleView.findViewById(R.id.device_progress_bar);
-		builder.setTitle("Select Device")
-		       .setIcon(R.drawable.google_home)
-		       .setOnDismissListener(new DialogInterface.OnDismissListener() {
-			       @Override
-			       public void onDismiss(DialogInterface dialog) {
-				       discoveryThread.interrupt();
-				       finish();
-			       }
-		       })
-		       .setAdapter(adapter, new DialogInterface.OnClickListener() {
-			       public void onClick(DialogInterface dialog, int which) {
-				       ChromeCast deviceSelected = adapter.getItem(which);
-				       Log.d(TAG, String.format("Selected device = %s", deviceSelected));
-				       SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(DeviceDialog.this);
-				       pref.edit()
-				           .putString("device", deviceSelected.getTitle())
-				           .putString("ip", deviceSelected.getAddress())
-				           .apply();
-				       dialog.dismiss();
-			       }
-		       })
-		       .setCustomTitle(titleView)
-		       .show();
-		discoveryThread.start();
-	}
-
+		@Override
+		public void chromeCastRemoved(ChromeCast chromeCast) {
+		}
+	};
 	Thread discoveryThread = new Thread(new Runnable() {
 		@Override
 		public void run() {
@@ -94,6 +68,40 @@ public class DeviceDialog extends Activity {
 		}
 	});
 
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		checkEdgeSupport();
+
+		getWindow().setBackgroundDrawable(new ColorDrawable(0));
+		setFinishOnTouchOutside(false);
+
+		final AlertDialog.Builder builder = new AlertDialog.Builder(DeviceDialog.this);
+		adapter = new DialogAdapter(this, new ArrayList<>());
+		adapter.setNotifyOnChange(true);
+		View titleView = getLayoutInflater().inflate(R.layout.dialog_title, null);
+		progressBar = titleView.findViewById(R.id.device_progress_bar);
+		builder.setTitle("Select Device")
+		       .setIcon(R.drawable.google_home)
+		       .setOnDismissListener(dialog -> {
+			       discoveryThread.interrupt();
+			       finish();
+		       })
+		       .setAdapter(adapter, (dialog, which) -> {
+			       ChromeCast deviceSelected = adapter.getItem(which);
+			       Log.d(TAG, String.format("Selected device = %s", deviceSelected));
+			       SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(DeviceDialog.this);
+			       pref.edit()
+			           .putString("device", deviceSelected.getTitle())
+			           .putString("ip", deviceSelected.getAddress())
+			           .apply();
+			       dialog.dismiss();
+		       })
+		       .setCustomTitle(titleView)
+		       .show();
+		discoveryThread.start();
+	}
+
 	private void stopDiscovery() {
 		try {
 			Log.d(TAG, "Stopping Chromecast device discovery");
@@ -102,25 +110,6 @@ public class DeviceDialog extends Activity {
 			Log.e(TAG, e.getMessage());
 		}
 	}
-
-	ChromeCastsListener addDeviceToDialogListener = new ChromeCastsListener() {
-		int index = 0;
-
-		@Override
-		public void newChromeCastDiscovered(final ChromeCast chromeCast) {
-			runOnUiThread(new Runnable() {
-				@Override
-				public void run() {
-					Log.d(TAG, String.format("Found device #%d = %s", index++, chromeCast));
-					adapter.add(chromeCast);
-				}
-			});
-		}
-
-		@Override
-		public void chromeCastRemoved(ChromeCast chromeCast) {
-		}
-	};
 
 	private void checkEdgeSupport() {
 		Slook slook = new Slook();

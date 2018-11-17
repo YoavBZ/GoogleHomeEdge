@@ -4,6 +4,7 @@ import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
@@ -14,15 +15,14 @@ import su.litvak.chromecast.api.v2.ChromeCast;
 
 public class PanelProvider extends SlookCocktailProvider {
 
+	static final String ACTION_REFRESH = "yoavbz.googlehomeedge.action.ACTION_REFRESH";
 	private static final String TAG = PanelProvider.class.getSimpleName();
 	private static final String ACTION_PLUS = "yoavbz.googlehomeedge.action.ACTION_PLUS";
 	private static final String ACTION_MINUS = "yoavbz.googlehomeedge.action.ACTION_MINUS";
 	private static final String ACTION_VOLUME_DIALOG = "yoavbz.googlehomeedge.action.ACTION_VOLUME_DIALOG";
-	static final String ACTION_REFRESH = "yoavbz.googlehomeedge.action.ACTION_REFRESH";
+	private static boolean panelDisabled = true;
 	private RemoteViews panelRv = null;
 	private RemoteViews stateRv = null;
-	private static Float volume;
-	private static boolean panelDisabled = true;
 	private ChromeCast chromeCast;
 
 	@Override
@@ -47,6 +47,8 @@ public class PanelProvider extends SlookCocktailProvider {
 				break;
 			case ACTION_VOLUME_DIALOG:
 				Intent volumeIntent = new Intent(context, VolumeDialog.class);
+				SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
+				float volume = pref.getFloat("volume", 0.1f);
 				volumeIntent.putExtra("volume", (int) (volume * 100));
 				context.startActivity(volumeIntent);
 				break;
@@ -66,54 +68,55 @@ public class PanelProvider extends SlookCocktailProvider {
 	}
 
 	private void fetchVolume(final Context context) {
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					String ip = PreferenceManager.getDefaultSharedPreferences(context).getString("ip", null);
-					if (chromeCast == null) {
-						chromeCast = new ChromeCast(ip);
-					}
-					Log.d(TAG, "Connecting to Chromecast address: " + chromeCast.getAddress());
-					chromeCast.connect();
-					volume = chromeCast.getStatus().volume.level;
-					panelDisabled = false;
-					updatePanelState(context);
-					animateRefresh(context, false);
+		new Thread(() -> {
+			try {
+				String ip = PreferenceManager.getDefaultSharedPreferences(context).getString("ip", null);
+				if (chromeCast == null) {
+					chromeCast = new ChromeCast(ip);
+				}
+				Log.d(TAG, "Connecting to Chromecast address: " + chromeCast.getAddress());
+				chromeCast.connect();
+				float volume = chromeCast.getStatus().volume.level;
+				SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
+				pref.edit().putFloat("volume", volume).apply();
+				panelDisabled = false;
+				updatePanelState(context);
+				animateRefresh(context, false);
 //					Log.d(TAG, "Disconnecting from Chromecast device: " + chromeCast);
 //					chromeCast.disconnect();
-				} catch (Exception e) {
-					Log.e(TAG, "fetchVolume() : exception - " + e.toString());
-					panelDisabled = true;
-					updatePanelState(context);
-					animateRefresh(context, false);
-				}
+			} catch (Exception e) {
+				Log.e(TAG, "fetchVolume() : exception - " + e.toString());
+				panelDisabled = true;
+				updatePanelState(context);
+				animateRefresh(context, false);
 			}
 		}).start();
 	}
 
 	private void changeVolume(final Context context, final float amount) {
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					volume = Math.min(100, Math.max(0, volume += amount));
-					String ip = PreferenceManager.getDefaultSharedPreferences(context).getString("ip", null);
-					if (chromeCast == null) {
-						chromeCast = new ChromeCast(ip);
-					}
-					chromeCast.connect();
-					chromeCast.setVolume(volume);
-					Log.d(TAG, String.format("Added amount: %.2f, to current volume: %.2f", amount, volume));
-					panelDisabled = false;
-					updatePanelState(context);
-//					chromeCast.disconnect();
-				} catch (Exception e) {
-					Log.e(TAG, e.getMessage());
-					volume -= amount;
-					panelDisabled = true;
-					updatePanelState(context);
+		new Thread(() -> {
+			SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
+			float volume = pref.getFloat("volume", 0.1f);
+			Log.d(TAG, "changeVolume: Current volume " + volume + ", adding " + amount);
+			volume = Math.min(100, Math.max(0, volume += amount));
+			pref.edit().putFloat("volume", volume).apply();
+			String ip = PreferenceManager.getDefaultSharedPreferences(context).getString("ip", null);
+			try {
+				if (chromeCast == null) {
+					chromeCast = new ChromeCast(ip);
 				}
+				chromeCast.connect();
+				chromeCast.setVolume(volume);
+				Log.d(TAG, String.format("Added amount: %.2f, to current volume: %.2f", amount, volume));
+				panelDisabled = false;
+				updatePanelState(context);
+//					chromeCast.disconnect();
+			} catch (Exception e) {
+				Log.e(TAG, "Got an exception " + e);
+				volume -= amount;
+				pref.edit().putFloat("volume", volume).apply();
+				panelDisabled = true;
+				updatePanelState(context);
 			}
 		}).start();
 	}
@@ -138,11 +141,14 @@ public class PanelProvider extends SlookCocktailProvider {
 		Intent dialogIntent = new Intent(context, DeviceDialog.class);
 		dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-		PendingIntent plusPendingIntent = PendingIntent.getBroadcast(context, 0, plusIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-		PendingIntent minusPendingIntent = PendingIntent.getBroadcast(context, 0, minusIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		PendingIntent plusPendingIntent = PendingIntent.getBroadcast(context, 0, plusIntent,
+		                                                             PendingIntent.FLAG_UPDATE_CURRENT);
+		PendingIntent minusPendingIntent = PendingIntent.getBroadcast(context, 0, minusIntent,
+		                                                              PendingIntent.FLAG_UPDATE_CURRENT);
 		PendingIntent volumeInputPendingIntent = PendingIntent.getBroadcast(context, 0, volumeInputIntent,
 		                                                                    PendingIntent.FLAG_UPDATE_CURRENT);
-		PendingIntent dialogPendingIntent = PendingIntent.getActivity(context, 0, dialogIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		PendingIntent dialogPendingIntent = PendingIntent.getActivity(context, 0, dialogIntent,
+		                                                              PendingIntent.FLAG_UPDATE_CURRENT);
 
 		panelView.setOnClickPendingIntent(R.id.plus, plusPendingIntent);
 		panelView.setOnClickPendingIntent(R.id.minus, minusPendingIntent);
@@ -157,7 +163,8 @@ public class PanelProvider extends SlookCocktailProvider {
 		RemoteViews stateView = new RemoteViews(context.getPackageName(), R.layout.state_layout);
 		Intent refreshIntent = new Intent(context, PanelProvider.class);
 		refreshIntent.setAction(ACTION_REFRESH);
-		PendingIntent refreshPendingIntent = PendingIntent.getBroadcast(context, 0, refreshIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		PendingIntent refreshPendingIntent = PendingIntent.getBroadcast(context, 0, refreshIntent,
+		                                                                PendingIntent.FLAG_UPDATE_CURRENT);
 		stateView.setOnClickPendingIntent(R.id.refresh_button, refreshPendingIntent);
 		return stateView;
 	}
@@ -178,6 +185,8 @@ public class PanelProvider extends SlookCocktailProvider {
 			panelRv.setBoolean(R.id.minus, "setEnabled", true);
 			panelRv.setTextViewText(R.id.volume_title, "Volume: ");
 			panelRv.setViewVisibility(R.id.volume_text, View.VISIBLE);
+			SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
+			float volume = pref.getFloat("volume", 0.1f);
 			panelRv.setTextViewText(R.id.volume_text, Integer.toString((int) (volume * 100)));
 			panelRv.setViewVisibility(R.id.device_select, View.VISIBLE);
 			String selectedDevice = PreferenceManager.getDefaultSharedPreferences(context)
